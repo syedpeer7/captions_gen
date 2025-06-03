@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>CTCHgen - Caption & Hashtag Generator (Gemini)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <!-- Google Fonts for modern typography -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <!-- Animate.css for entrance animations -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+  <style>
+    :root {
+      --primary: #6f61e8;
+      --secondary: #ff8c42;
+      --background: #f6f7fb;
+      --surface: #fff;
+      --shadow: 0 8px 36px rgba(111, 97, 232, 0.13), 0 2px 8px rgba(111,97,232,0.07);
+      --radius: 20px;
+      --input-border: #bfbfed;
+      --hashtag-bg: #eceaff;
+      --hashtag-color: #6f61e8;
+      --transition: 0.24s cubic-bezier(.4,0,.2,1);
+    }
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+      background: var(--background);
+      color: #23223a;
+      min-height: 100vh;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    /* Layout with logo on left */
+    .main-wrapper {
+      display: flex;
+      flex-direction: row;
+      min-height: 100vh;
+      align-items: stretch;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .logo-side {
+      width: 340px;
+      background: linear-gradient(145deg, var(--primary) 65%, var(--secondary) 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-top-left-radius: var(--radius);
+      border-bottom-left-radius: var(--radius);
+      box-shadow: 0 12px 48px rgba(111,97,232,0.13);
+      min-height: 100vh;
+      animation: fadeInLeft 1s;
+    }
+    @keyframes fadeInLeft {
+      from { opacity: 0; transform: translateX(-60px);}
+      to   { opacity: 1; transform: translateX(0);}
+    }
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      background: var(--background);
+      border-top-right-radius: var(--radius);
+      border-bottom-right-radius: var(--radius);
+      min-height: 100vh;
+      animation: fadeInRight 1s;
+    }
+    @keyframes fadeInRight {
+      from { opacity:0; transform: translateX(60px);}
+      to { opacity:1; transform: translateX(0);}
+    }
+    /* Eye-catching logo SVG */
+    .ctch-logo-svg {
+      width: 95px;
+      height: 95px;
+      margin-bottom: 18px;
+      filter: drop-shadow(0 6px 14px #513be7a1);
+      animation: animateLogo 2.8s infinite alternate;
+    }
+    @keyframes animateLogo {
+      0% {transform: scale(1) rotate(-5deg);}
+      50% {transform: scale(1.08) rotate(6deg);}
+      100% {transform: scale(1) rotate(-5deg);}
+    }
+    .ctch-logo-side-title {
+      color: #fff;
+      font-size: 2.3rem;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-shadow: 0 2px 8px #6f61e880;
+      margin-bottom: 12px;
+    }
+    .ctch-logo-side-sub {
+      color: #fff;
+      font-size: 1.2rem;
+      opacity: 0.89;
+      margin-bottom: 24px;
+      font-weight: 500;
+    }
+    /* Platform Icon Display */
+    .platform-icon {
+      width: 54px;
+      height: 54px;
+      margin-bottom: 0.5rem;
+      border-radius: 13px;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 9px rgba(111,97,232,0.11);
+      margin-left: auto;
+      margin-right: auto;
+    }
+    /* Top Bar */
+    .top-bar {
+      padding: 0 0 28px 0;
+      max-width: 700px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      width: 100%;
+    }
+    .ctch-logo {
+      display: flex;
+      align-items: center;
+      font-weight: 800;
+      font-size: 2.3rem;
+      letter-spacing: 1.5px;
+      background: linear-gradient(90deg, var(--primary) 50%, var(--secondary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .ctch-logo-main {
+      letter-spacing: 2px;
+      filter: drop-shadow(0 2px 0 var(--primary));
+    }
+    .ctch-logo-sub {
+      margin-left: 7px;
+      font-size: 1.4rem;
+      color: var(--secondary);
+      font-weight: 600;
+      letter-spacing: 0;
+      filter: drop-shadow(0 2px 0 var(--secondary));
+      opacity: 0.92;
+    }
+    /* Dropdown */
+    .dropdown-container {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      font-size: 1.08rem;
+      background: #f3f2ff;
+      border-radius: 12px;
+      padding: 7px 14px;
+      box-shadow: 0 1px 8px rgba(111,97,232,0.11);
+    }
+    select {
+      padding: 7px 13px;
+      font-size: 1rem;
+      border-radius: 8px;
+      border: 1.5px solid var(--input-border);
+      outline: none;
+      transition: border var(--transition);
+      background: #fff;
+    }
+    select:focus {
+      border-color: var(--primary);
+    }
+    /* Main Container */
+    .ctchgen-container {
+      width: 100%;
+      max-width: 520px;
+      margin: 0 auto 32px auto;
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 44px 32px 30px 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      animation: fadeInDown 1s;
+    }
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-32px);}
+      to   { opacity: 1; transform: translateY(0);}
+    }
+    .subtitle {
+      font-size: 1.23rem;
+      color: #5c5c7c;
+      font-weight: 600;
+      margin: 8px 0 22px 0;
+      letter-spacing: 0.3px;
+      text-align: center;
+      min-height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+    }
+    /* Input Box */
+    .input-box {
+      width: 100%;
+      border: 1.5px solid var(--input-border);
+      border-radius: 10px;
+      padding: 15px 14px;
+      font-size: 1.08rem;
+      margin-bottom: 16px;
+      resize: vertical;
+      transition: border var(--transition), box-shadow var(--transition);
+      background: #fcfcff;
+      color: #2e2d4d;
+      box-shadow: 0 1px 6px rgba(111,97,232,0.04);
+    }
+    .input-box:focus {
+      border-color: var(--primary);
+      outline: none;
+      box-shadow: 0 2px 16px rgba(111,97,232,0.13);
+    }
+    /* Button */
+    .generate-btn {
+      background: linear-gradient(90deg, var(--primary), var(--secondary) 75%);
+      color: #fff;
+      padding: 12px 38px;
+      border: none;
+      border-radius: 9px;
+      font-size: 1.13rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      cursor: pointer;
+      letter-spacing: 1px;
+      box-shadow: 0 1px 8px rgba(111,97,232,0.08);
+      transition: background var(--transition), transform var(--transition), box-shadow var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+    .generate-btn:after {
+      content: '';
+      display: block;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 100px;
+      background: rgba(255,255,255,0.18);
+      transform: translate(-50%, -50%);
+      transition: width 0.4s, height 0.4s;
+      z-index: 0;
+    }
+    .generate-btn:active:after {
+      width: 155%;
+      height: 300%;
+      transition: 0s;
+    }
+    .generate-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    /* Output */
+    .output-section {
+      margin: 24px 0 0 0;
+      width: 100%;
+      animation: fadeIn 0.7s;
+    }
+    @keyframes fadeIn {
+      from { opacity:0; }
+      to { opacity:1; }
+    }
+    .output {
+      background: #f6f5ff;
+      border-radius: 10px;
+      padding: 18px;
+      margin: 0 0 16px 0;
+      word-break: break-word;
+      font-size: 1.08rem;
+      color: #38386a;
+      box-shadow: 0 2px 8px rgba(111,97,232,0.07);
+      animation: fadeIn 0.4s;
+    }
+    .hashtag {
+      background: var(--hashtag-bg);
+      color: var(--hashtag-color);
+      padding: 4px 13px;
+      border-radius: 18px;
+      margin: 0 7px 7px 0;
+      font-size: 1.02rem;
+      font-weight: 600;
+      display: inline-block;
+      box-shadow: 0 1px 4px rgba(111,97,232,0.09);
+      transition: transform 0.2s;
+      animation: bounceIn 0.6s;
+    }
+    .hashtag:hover {
+      transform: scale(1.13) rotate(-2deg);
+      background: linear-gradient(90deg, var(--primary) 80%, var(--secondary));
+      color: #fff;
+    }
+    @keyframes bounceIn {
+      from {transform: scale(0.5);}
+      to {transform: scale(1);}
+    }
+    .error {
+      color: #e74c3c;
+      margin-bottom: 13px;
+      text-align: center;
+      font-weight: 600;
+      font-size: 1.06rem;
+      letter-spacing: 0.2px;
+      animation: shake 0.4s;
+    }
+    @keyframes shake {
+      10%, 90% { transform: translateX(-1px);}
+      20%, 80% { transform: translateX(3px);}
+      30%, 50%, 70% { transform: translateX(-6px);}
+      40%, 60% { transform: translateX(6px);}
+    }
+    /* Copy Button */
+    .copy-btn {
+      margin-top: 8px;
+      background: linear-gradient(90deg, var(--primary), var(--secondary) 90%);
+      color: #fff;
+      border: none;
+      padding: 8px 24px;
+      border-radius: 7px;
+      font-size: 1.02rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background var(--transition), transform var(--transition), box-shadow var(--transition);
+      box-shadow: 0 1px 8px rgba(111,97,232,0.11);
+      margin-bottom: 8px;
+      outline: none;
+    }
+    .copy-btn:hover, .copy-btn:focus {
+      background: linear-gradient(90deg, var(--secondary) 50%, var(--primary));
+      transform: scale(1.07);
+      box-shadow: 0 4px 18px rgba(255,140,66,0.13);
+    }
+    /* Footer */
+    footer {
+      margin-top: 32px;
+      color: #b4b4c2;
+      font-size: 1.03rem;
+      text-align: center;
+      letter-spacing: 0.2px;
+      font-weight: 500;
+      opacity: 0.9;
+    }
+    /* Responsive */
+    @media (max-width: 950px) {
+      .main-wrapper { flex-direction: column; }
+      .logo-side { flex-direction: row; width: 100%; min-height: unset; border-radius: 0; height: 110px; }
+      .ctch-logo-svg { margin-bottom: 0; margin-right: 28px;}
+      .main-content { border-radius: 0; }
+    }
+    @media (max-width: 650px) {
+      .ctchgen-container, .top-bar {
+        padding: 22px 6vw;
+        max-width: 100vw;
+      }
+      .ctchgen-container {
+        margin: 0 0 18px 0;
+      }
+      .logo-side { height: 70px; }
+      .ctch-logo-svg { width: 55px; height: 55px; margin-right: 14px; }
+      .ctch-logo-side-title { font-size: 1.25rem; }
+    }
+    @media (max-width: 420px) {
+      .ctchgen-container, .top-bar { padding: 8px 2vw; }
+      .subtitle { font-size: 1rem;}
+      .ctch-logo { font-size: 1.5rem;}
+    }
+  </style>
+</head>
+<body>
+  <div class="main-wrapper">
+    <!-- Left Logo Side -->
+    <div class="logo-side animate__animated animate__fadeInLeft">
+      <svg class="ctch-logo-svg" viewBox="0 0 96 96" fill="none">
+        <circle cx="48" cy="48" r="46" fill="#fff" stroke="#6f61e8" stroke-width="4"/>
+        <ellipse cx="48" cy="48" rx="34" ry="34" fill="url(#a)" />
+        <path d="M36 42h24v12a12 12 0 0 1-24 0V42z" fill="#fff" opacity="0.8"/>
+        <circle cx="48" cy="48" r="14" fill="#ff8c42" stroke="#fff" stroke-width="4"/>
+        <text x="48" y="55" font-family="Segoe UI, Arial, sans-serif" text-anchor="middle" font-size="21" font-weight="bold" fill="#6f61e8" letter-spacing="2">CT</text>
+        <defs>
+          <radialGradient id="a" cx="0.5" cy="0.5" r="0.7">
+            <stop offset="0%" stop-color="#ff8c42"/>
+            <stop offset="100%" stop-color="#6f61e8"/>
+          </radialGradient>
+        </defs>
+      </svg>
+      <div>
+        <div class="ctch-logo-side-title">CTCHgen</div>
+        <div class="ctch-logo-side-sub">Captions & Hashtags, Generator</div>
+      </div>
+    </div>
+    <!-- Main Site Content -->
+    <div class="main-content">
+      <div class="top-bar animate__animated animate__fadeInDown">
+        <div class="ctch-logo">
+          <span class="ctch-logo-main">CTCH</span>
+          <span class="ctch-logo-sub">gen</span>
+        </div>
+        <div class="dropdown-container">
+          <label for="platform">Platform:</label>
+          <select id="platform">
+            <option value="youtube">YouTube</option>
+            <option value="instagram">Instagram</option>
+            <option value="linkedin">LinkedIn</option>
+            <option value="x">X</option>
+          </select>
+        </div>
+      </div>
+      <div class="ctchgen-container animate__animated animate__fadeInUp">
+        <div id="platform-icon-container" class="platform-icon" style="display: none;"></div>
+        <h2 class="subtitle animate__animated animate__fadeIn" id="subtitle-text">
+          Automate your YouTube captions & hashtags
+        </h2>
+        <form id="ctchgen-form" autocomplete="off">
+          <textarea required class="input-box" id="input" rows="5" placeholder="Describe your video content here..."></textarea>
+          <button class="generate-btn animate__animated animate__pulse" type="submit" id="generate">Generate</button>
+        </form>
+        <div class="error" id="error"></div>
+        <div class="output-section" id="output-section" style="display:none;">
+          <h3>Suggested Caption:</h3>
+          <p class="output" id="caption"></p>
+          <button class="copy-btn" onclick="copyToClipboard('caption')">Copy Caption</button>
+          <h3>Suggested Hashtags:</h3>
+          <p class="output" id="hashtags"></p>
+          <button class="copy-btn" onclick="copyToClipboard('hashtags')">Copy Hashtags</button>
+        </div>
+        <footer>
+          <small>CTCHgen &copy; <span id="year"></span>| Created by  <span style="color: var(--primary);font-weight:700;">Syed Syed Peer</span> | Powered by <span style="color: var(--primary);font-weight:700;">Google Gemini</span></small>
+        </footer>
+      </div>
+    </div>
+  </div>
+  <script>
+    // Platform icon SVGs
+    const platformIcons = {
+      youtube: `<svg viewBox="0 0 48 48" width="40" height="40"><rect width="48" height="48" rx="12" fill="#fff"/><path d="M40.5 16.5a4.9 4.9 0 0 0-3.47-3.48C34 12.5 24 12.5 24 12.5s-10 0-13.03.52A4.9 4.9 0 0 0 7.5 16.5C7 19.53 7 24 7 24s0 4.47.5 7.5a4.91 4.91 0 0 0 3.47 3.48C14 35.5 24 35.5 24 35.5s10 0 13.03-.52A4.91 4.91 0 0 0 40.5 31.5c.5-3.03.5-7.5.5-7.5s0-4.47-.5-7.5z" fill="#FF0000"/><polygon points="20,30 32,24 20,18" fill="#fff"/></svg>`,
+      instagram: `<svg viewBox="0 0 48 48" width="40" height="40"><rect width="48" height="48" rx="12" fill="url(#ig)"/><defs>
+      <radialGradient id="ig" cx="0.7" cy="0.2" r="1.1">
+        <stop stop-color="#fd5"/>
+        <stop offset="0.5" stop-color="#ff543e"/>
+        <stop offset="1" stop-color="#833ab4"/>
+      </radialGradient></defs>
+      <circle cx="24" cy="24" r="10" fill="#fff" opacity="0.3"/><circle cx="24" cy="24" r="6.5" fill="#fff"/><circle cx="36.5" cy="11.5" r="2.5" fill="#fff" opacity="0.8"/></svg>`,
+      linkedin: `<svg viewBox="0 0 48 48" width="40" height="40"><rect width="48" height="48" rx="12" fill="#0077B5"/><rect x="10" y="19" width="6" height="15" fill="#fff"/><circle cx="13" cy="15" r="3" fill="#fff"/><rect x="20" y="19" width="6" height="15" fill="#fff"/><rect x="20" y="27" width="10" height="7" fill="#fff"/><rect x="30" y="19" width="6" height="15" fill="#fff"/></svg>`,
+      x: `<svg viewBox="0 0 48 48" width="40" height="40"><rect width="48" height="48" rx="12" fill="#fff"/><path d="M13 13h5.3l7.3 10.5L34.8 13H41l-10.3 14.2L41 35h-6.2l-7.7-11.1L13.2 35H7l10.5-14.1L7 13z" fill="#222"/></svg>`
+    };
+    // Platform subtitle text
+    const platformSubtitles = {
+      youtube: "Automate your YouTube captions & hashtags",
+      instagram: "Automate your Instagram captions & hashtags",
+      linkedin: "Automate your LinkedIn captions & hashtags",
+      x: "Automate your X captions & hashtags"
+    };
+
+    function updatePlatformUI() {
+      const platform = document.getElementById('platform').value;
+      // Update subtitle
+      document.getElementById('subtitle-text').innerHTML =
+        `<span>${platformSubtitles[platform] || ''}</span>`;
+      // Update platform icon
+      const iconContainer = document.getElementById('platform-icon-container');
+      if (platformIcons[platform]) {
+        iconContainer.innerHTML = platformIcons[platform];
+        iconContainer.style.display = 'flex';
+      } else {
+        iconContainer.style.display = 'none';
+      }
+    }
+
+    document.getElementById('platform').addEventListener('change', updatePlatformUI);
+    window.addEventListener('DOMContentLoaded', updatePlatformUI);
+
+    function copyToClipboard(id) {
+      const text = document.getElementById(id).innerText;
+      navigator.clipboard.writeText(text)
+        .then(() => {
+          const btns = document.querySelectorAll('.copy-btn');
+          btns.forEach(btn => btn.classList.remove('animate__tada'));
+          event.target.classList.add('animate__tada');
+          setTimeout(() => event.target.classList.remove('animate__tada'), 900);
+        })
+        .catch(err => alert("Failed to copy!"));
+    }
+
+    document.getElementById('year').textContent = (new Date()).getFullYear();
+
+    const form = document.getElementById('ctchgen-form');
+    const input = document.getElementById('input');
+    const platform = document.getElementById('platform');
+    const errorDiv = document.getElementById('error');
+    const outputSection = document.getElementById('output-section');
+    const captionDiv = document.getElementById('caption');
+    const hashtagsDiv = document.getElementById('hashtags');
+    const generateBtn = document.getElementById('generate');
+
+    // Animation utility
+    function animateCSS(element, animation, prefix = 'animate__') {
+      return new Promise((resolve, reject) => {
+        const animationName = `${prefix}${animation}`;
+        element.classList.add(`${prefix}animated`, animationName);
+
+        function handleAnimationEnd(event) {
+          event.stopPropagation();
+          element.classList.remove(`${prefix}animated`, animationName);
+          resolve('Animation ended');
+        }
+        element.addEventListener('animationend', handleAnimationEnd, {once: true});
+      });
+    }
+
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      errorDiv.textContent = '';
+      outputSection.style.display = 'none';
+      captionDiv.textContent = '';
+      hashtagsDiv.textContent = '';
+      generateBtn.disabled = true;
+      generateBtn.textContent = 'Generating...';
+      animateCSS(generateBtn, 'pulse');
+
+      const videoDescription = input.value.trim();
+      const selectedPlatform = platform.value;
+
+      if (!videoDescription) {
+        errorDiv.textContent = "Please write a video description.";
+        animateCSS(errorDiv, 'shakeX');
+        generateBtn.disabled = false;
+        generateBtn.textContent = 'Generate';
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            description: videoDescription,
+            platform: selectedPlatform
+          })
+        });
+
+        const result = await response.json();
+        const text = result.result || '';
+        const caption = text.split("Hashtags:")[0].replace("Caption:", "").trim();
+        const hashtags = text.split("Hashtags:")[1]?.trim();
+
+        captionDiv.textContent = caption || 'No caption returned.';
+        if (hashtags) {
+          hashtagsDiv.innerHTML = hashtags
+            .split(' ')
+            .filter(tag => tag.trim())
+            .map(tag => `<span class="hashtag animate__animated animate__bounceIn">${tag.trim()}</span>`)
+            .join('');
+        } else {
+          hashtagsDiv.innerHTML = '<span>No hashtags returned.</span>';
+        }
+
+        outputSection.style.display = 'block';
+        animateCSS(outputSection, 'fadeIn');
+      } catch (err) {
+        errorDiv.textContent = "Error: " + (err.message || err);
+        animateCSS(errorDiv, 'shakeX');
+      } finally {
+        generateBtn.disabled = false;
+        generateBtn.textContent = 'Generate';
+      }
+    });
+
+    // On load, subtle animation for container
+    window.addEventListener('DOMContentLoaded', () => {
+      const container = document.querySelector('.ctchgen-container');
+      animateCSS(container, 'fadeInUp');
+    });
+  </script>
+</body>
+</html>
