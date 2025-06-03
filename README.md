@@ -23,4 +23,4 @@
 
 ### web page
 
-URL :
+URL : https://captions-gen.vercel.app/
